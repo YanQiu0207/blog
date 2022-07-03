@@ -10,7 +10,7 @@
 
 ### 原理
 
-![GitHub Logo](ntp.png)
+[![jGiadg.png](https://s1.ax1x.com/2022/07/03/jGiadg.png)](https://imgtu.com/i/jGiadg)
 
 我们根据上图来推导 A 和 B 之间的时间偏移：
 
