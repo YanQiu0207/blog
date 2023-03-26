@@ -1,5 +1,15 @@
 #  Paxos
 
+## 底层原理
+
+核心是要保证算法的安全性，即一个变量的值被选定后就不能再更改了。所以，一个值被选定后，后续的提案能够感知到这件事，并修改自己的提议值为已选定的值。这暗示了 Paxos 是一个两阶段的协议。
+
+这里会有并发问题，如果两个提议者同时提议，还是有可能违背安全性的。所以，我们需要一种策略，最终只能让一个提案被选定，另一个应该被拒绝。这里也暗示了我们应该能够区分不同的提案，例如给每个提案一个唯一的 ID。
+
+综上所述，Paxos 的第一阶段的作用有两个，一是选主，只有编号最大的提案才会在第二阶段被接受；二是发现已选定的值，避免违反安全性要求。
+
+现在的问题是，如何发现那个已选定的值？
+
 ## 选值策略
 
 场景 2-3-2 Pj 的提案 Proposal-j 最终会被法定集合 Q-j 接受，即 v 的值被决定为 b，且 Proposer-i.proposal-id > Proposer-j.proposal-id，必须要让 Proposer-i.v == Proposer-j.v，否则 v 就会被决定为另一个值，违背算法的安全性要求。
@@ -32,6 +42,51 @@ PreProposal-f.proposal-id 和 Proposal-j.proposal-id 大小关系也未知，不
 结论：假设提案 Proposal-j 会被通过，策略 CL 存在。对于任意一个 proposal_id 更大的提案 Proposal-i，它预提案阶段获得的所有提案 K-i，其中存在 Proposal-f.v != Proposal-m.v，那么 Proposal-f.proposal-id < Proposal-j.proposal-id
 
 也就是说，Proposal-m.proposal-id >= Proposal-j.proposal-id，Proposal-m.v == Proposal-j.v。我们只需要选择 proposal-id 最大的那个提案的值，就能令 Proposal-i.v == Proposal-m.v。这就是策略 CL 的具体形式。
+
+## 形式证明
+
+CP1：如果一个提案 Proposal-j 最终会被通过，那么任意一个提案 Proposal-i，如果 Proposal-i.id > Proposal-j.id，那么 Proposal-i.v == Proposal-j.v
+
+辅助条件：选值策略是从回复预提案的多数派集合的所有提案中选择编号最大的那个提案。
+
+**第一种证明方法（归约法）**：首先假设 Proposal-i.v != Proposal-j.v，如果能得出矛盾，就能证明 CP1.
+
+记大多数进程的集合为 Q
+记预提案阶段 Q 中所有进程回复的所有提案集合为 K，其中编号最大的提案为 MaxProposal(K)
+
+如果一个提案 Proposal-j 最终会被通过，那么必定存在一个集合 Q-j，其中每个进程都接受了 Proposal-j
+
+回复 Proposal-i 预提案的进程集合为 Q-i
+
+由于两个多数派的交集必定不为空，所以一定有一个进程 Pk 既接受了 Proposal-j，又回复了 Proposal-i，但顺序有两种：
+- Pk 先接受了 Proposal-j
+- Pk 先回复了 Proposal-i
+
+如果 Pk 先回复了 Proposal-i，且 Proposal-i.id > Proposal-j.id，那么 Pk 不可能接受 roposal-j，这种情况违背了前提条件。
+
+所以 Pk 一定是先接受了 Proposal-j，后回复了 Proposal-i。也就是说，Q-i 回复的所有提案 K-i 中一定包含了 Proposal-j。
+
+Proposal-i 的值来自 K-i 中编号最大提案的值，记这个提案为 Proposal-m, m < i. 由于 Proposal-i.v != Proposal-j.v 且 Proposal-i.v == Proposal-m.v，所以 Proposal-m != Proposal-j
+
+至此，我们可以得到一个结论，基于一个提案 Proposal-j 最终会被通过的前提下，如果存在一个提案 Proposal-i，Proposal-i.id > Proposal-j.id 且 Proposal-i.v != Proposal-j.v，那么必然存在一个提案 Proposal-m，Proposal-m.id > Proposal-j.id 且 Proposal-m.v != Proposal-j.v，
+
+记如果存在一个提案 Proposal-i，Proposal-i.id > Proposal-j.id 且 Proposal-i.v != Proposal-j.v 为 CF(j, i)，那么上述结论可以简化为
+
+基于一个提案 Proposal-j 最终会被通过的前提下，如果 CF(j, i) 存在，必然 CF(j, m) 存在，且 j < m < i. 
+
+这个过程可以无限递归下去，但区间范围是不断缩小的，最终会递归到一个区间 CF(j, j+1) 存在，但找不到一个区间 CF(j, y) 存在，此时 j < y < j+1。与上述结论矛盾。由于 CF(j, m) 不存在，所以 CF(j, i) 不存在，即假设不成立。
+
+**第二种证明方法**
+
+假设存在一个提案的非空集合 T，集合中的任意一个提案 Proposal-k.id > Proposal-j.id 且 Proposal-k.v != Proposal-k.v。假设提案 Proposal-i 是集合 T 中编号最小的提案。因为集合非空，所以提案 Proposal-i 必定存在。
+
+类似上述证明方法，我们知道必然存在一个提案 Proposal-m，Proposal-m.id > Proposal-j.id 且 Proposal-m.v != Proposal-j.v，j < m < i，即 Proposal-m 也属于集合 T，但 m < i，与 Proposal-i 是集合 T 中编号最小的提案矛盾。
+
+也就是说，集合 T 不存在，即任意一个提案 Proposal-k.id > Proposal-j.id，必定 Proposal-k.v == Proposal-k.v
+
+## 常见问题
+
+xxxxx
 
 ## 参考文章
 
