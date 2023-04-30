@@ -31,7 +31,7 @@
   - 被动：响应 Proposer 的消息，即投票
   - 存储选定的值、投票过程的状态
 
-## 可靠直观的解释
+## 直观的解释
 
 选定一个值最简单的方法：只使用一个 Acceptor。所有的 Proposer 都将值发给某个 Acceptor，然后由它来从中选择一个值。虽然方法很简单，但如果 Acceptor 宕机，算法就无法继续下去，最终不能决定一个值或者无法得知被决定的值是哪个，不满足活性要求。**所以必须使用多个 Acceptor**。
 
@@ -57,7 +57,9 @@
 
 如何发现那个已选定的值？如果之前已经选定了值，那么所有 Acceptor 接受的提案中，编号比 n 小的最大提案的值肯定是选定值。原理是两个多数派必有交集
 
-如何避免多个提案并发时多次选定不同的值？只有编号更大的提案才能在第二阶段写入，其它提案都会被拒绝
+如何避免多个提案并发时多次选定不同的值？每个提案一个唯一的编号，多个提案并发时，只有编号更大的提案才能在第二阶段写入，其它提案都要被拒绝
+
+![20230414000603-2023-04-14](https://raw.githubusercontent.com/YanQiu0207/image/main/20230414000603-2023-04-14.png)
 
 ### 严格证明
 
@@ -91,17 +93,17 @@
 
 如何证明满足 $P2^c$，就可满足 $P2^b$ 呢？
 
-命题：如果一个提案 {m, v} 被多数派接受了，那么提议 m 到 n 对应的值都为 v，其中 n >= m
+命题：如果一个提案 {m, v} 被多数派接受了，那么提议 m 到 n 对应的值都为 v，其中 n > m
 
 证明方法一：归纳法
 
 对 n 进行归纳假设。
 
-如果 n==m，结论显然成立
+如果 n == m+1，结论显然成立
 
-设 n==k,k>m 结论成立，那么 m 到 k 的提案值都为 v
+假设 n == k,k>m 结论成立，那么 m 到 k 的提案值都为 v
 
-下面要证明 n==k+1,k>m 时，m 到 k+1 的提案值都为 v. 由于 n==k 的假设成立，只需要证明提案 k+1 的值为 v 
+下面要证明 n == k+1,k>m 时，m 到 k+1 的提案值都为 v. 由于 n == k 的假设成立，只需要证明提案 k+1 的值为 v 
 
 假设提案 k+1 的值来自某个多数派集合所接受过的所有编号比 k+1 小的提案（记作Q）中编号最大的那个提案 t，记作 {t, v1}
 
@@ -117,85 +119,27 @@
 
 证明方法二：反证法
 
+需要证明以下命题存在矛盾：如果一个提案 {m, v} 被多数派接受了，存在一个提案 {n, v1}，n > m，但 v != v1
 
+假设 n 是编号大于 m 的最小提案，即 n == m+1
 
-## 选值策略
+一定是提案 {m, v} 先被多数派接受了，然后才提出提案 {n, v1}，否则提案 {m, v} 一定无法被接受，因为提案编号 m < n
 
-场景 2-3-2 Pj 的提案 Proposal-j 最终会被法定集合 Q-j 接受，即 v 的值被决定为 b，且 Proposer-i.proposal-id > Proposer-j.proposal-id，必须要让 Proposer-i.v == Proposer-j.v，否则 v 就会被决定为另一个值，违背算法的安全性要求。
+接受提案 {m, v} 的多数派集合为 S1；提案 {n, v1} 能被提出，说明有一个多数派集合 S2 响应了 Prepare 请求；
 
-要让 Proposer-i.v == Proposer-j.v，Pi 需要先主动询问进程集合。
+这两个多数派集合 S1 和 S2 必有交集，也就是说存在一个进程，先接受了提案 {m, v}，后响应了提案 {n, v1} 的 Prepare 请求
 
-Acceptor 不知道哪个 Porposal 会被通过，它只知道自己接受了哪些 Porposal，所以回复自己知道的所有 Proposal 就行了
+记多数派集合 S2 所接受过的所有编号比 n 小的提案为 Q，由于两个多数派集合 S1 和 S2 必有交集，所以提案集合 Q 必定包含提案 m
 
-Pi 接收到了法定集合 Q-i 知道的所有提案，记这个提案集合为 K-i，那么 Pi 应该从中选择哪个提案的值作为提案 Proposer-i 的值呢？
+提案集合 Q 中编号最大的那个提案为 t，那么 m <= t。提案 t 的提议值为 v1，由于 v != v1，所以 t != m。即 m < t
 
-假设这个被选中的提案是 Proposer-m，我们希望 Proposer-m 是 Proposer-j，实际上只需要 Proposer-m.v == Proposer-j.v 就能满足要求。反过来看，K-i 中可能存在提案 Proposal-f 且 Proposal-f.v != Proposer-j.v
-
-我们不妨假设存在一个选择策略 CL，CL 能够让选择出的提案 Proposer-m.v == Proposer-j.v。然后我们分析下 Proposal-f 有什么特征，因为这个特征的反面可能就是选择策略的具体形式。
-
-Proposal-f 能够被提出，说明一定存在一个法定集合 Q-f，它里面的每个进程都接受了 PreProposal-f。
-
-Q-f 和 Q-j 必定存在一个公共进程，记作 Ps，Ps 既接受了 PreProposal-f，也接受了 Proposal-j，但先后顺序未知，但只有两种可能：
-
-（1）Ps 先接受 PreProposal-f
-（2）Ps 先接受 Proposal-j
-
-PreProposal-f.proposal-id 和 Proposal-j.proposal-id 大小关系也未知，不妨先假设 PreProposal-f.proposal-id > Proposal-j.proposal-id
-
-对于情形 1，Ps 先接受 PreProposal-f，会导致后续无法再接受 Proposal-j，即 Proposal-j 未达成一致，与假设不符合。
-
-对于情形 2，Ps 先接受 Proposal-j 后接受 PreProposal-f。由于假设了策略 CL 存在，那么 Proposal-f.v == Proposal-j.v，与 Proposal-f 的假设矛盾。
-
-当假设 PreProposal-f.proposal-id > Proposal-j.proposal-id，情形 1 和 2 都得出了矛盾。另外，提案的编号各不相同，所以必定 PreProposal-f.proposal-id < Proposal-j.proposal-id，即 Proposal-f.proposal-id < Proposal-j.proposal-id
-
-结论：假设提案 Proposal-j 会被通过，策略 CL 存在。对于任意一个 proposal_id 更大的提案 Proposal-i，它预提案阶段获得的所有提案 K-i，其中存在 Proposal-f.v != Proposal-m.v，那么 Proposal-f.proposal-id < Proposal-j.proposal-id
-
-也就是说，Proposal-m.proposal-id >= Proposal-j.proposal-id，Proposal-m.v == Proposal-j.v。我们只需要选择 proposal-id 最大的那个提案的值，就能令 Proposal-i.v == Proposal-m.v。这就是策略 CL 的具体形式。
-
-## 形式证明
-
-CP1：如果一个提案 Proposal-j 最终会被通过，那么任意一个提案 Proposal-i，如果 Proposal-i.id > Proposal-j.id，那么 Proposal-i.v == Proposal-j.v
-
-辅助条件：选值策略是从回复预提案的多数派集合的所有提案中选择编号最大的那个提案。
-
-**第一种证明方法（归约法）**：首先假设 Proposal-i.v != Proposal-j.v，如果能得出矛盾，就能证明 CP1.
-
-记大多数进程的集合为 Q
-记预提案阶段 Q 中所有进程回复的所有提案集合为 K，其中编号最大的提案为 MaxProposal(K)
-
-如果一个提案 Proposal-j 最终会被通过，那么必定存在一个集合 Q-j，其中每个进程都接受了 Proposal-j
-
-回复 Proposal-i 预提案的进程集合为 Q-i
-
-由于两个多数派的交集必定不为空，所以一定有一个进程 Pk 既接受了 Proposal-j，又回复了 Proposal-i，但顺序有两种：
-- Pk 先接受了 Proposal-j
-- Pk 先回复了 Proposal-i
-
-如果 Pk 先回复了 Proposal-i，且 Proposal-i.id > Proposal-j.id，那么 Pk 不可能接受 roposal-j，这种情况违背了前提条件。
-
-所以 Pk 一定是先接受了 Proposal-j，后回复了 Proposal-i。也就是说，Q-i 回复的所有提案 K-i 中一定包含了 Proposal-j。
-
-Proposal-i 的值来自 K-i 中编号最大提案的值，记这个提案为 Proposal-m, m < i. 由于 Proposal-i.v != Proposal-j.v 且 Proposal-i.v == Proposal-m.v，所以 Proposal-m != Proposal-j
-
-至此，我们可以得到一个结论，基于一个提案 Proposal-j 最终会被通过的前提下，如果存在一个提案 Proposal-i，Proposal-i.id > Proposal-j.id 且 Proposal-i.v != Proposal-j.v，那么必然存在一个提案 Proposal-m，Proposal-m.id > Proposal-j.id 且 Proposal-m.v != Proposal-j.v，
-
-记如果存在一个提案 Proposal-i，Proposal-i.id > Proposal-j.id 且 Proposal-i.v != Proposal-j.v 为 CF(j, i)，那么上述结论可以简化为
-
-基于一个提案 Proposal-j 最终会被通过的前提下，如果 CF(j, i) 存在，必然 CF(j, m) 存在，且 j < m < i. 
-
-这个过程可以无限递归下去，但区间范围是不断缩小的，最终会递归到一个区间 CF(j, j+1) 存在，但找不到一个区间 CF(j, y) 存在，此时 j < y < j+1。与上述结论矛盾。由于 CF(j, m) 不存在，所以 CF(j, i) 不存在，即假设不成立。
-
-**第二种证明方法**
-
-假设存在一个提案的非空集合 T，集合中的任意一个提案 Proposal-k.id > Proposal-j.id 且 Proposal-k.v != Proposal-k.v。假设提案 Proposal-i 是集合 T 中编号最小的提案。因为集合非空，所以提案 Proposal-i 必定存在。
-
-类似上述证明方法，我们知道必然存在一个提案 Proposal-m，Proposal-m.id > Proposal-j.id 且 Proposal-m.v != Proposal-j.v，j < m < i，即 Proposal-m 也属于集合 T，但 m < i，与 Proposal-i 是集合 T 中编号最小的提案矛盾。
-
-也就是说，集合 T 不存在，即任意一个提案 Proposal-k.id > Proposal-j.id，必定 Proposal-k.v == Proposal-k.v
+由于 t < n，所以 m < t < n，但 m 和 n 之间不可能存在其他提案，所以 t 不存在
 
 ## 常见问题
 
-xxxxx
+1. 提案编号的要求：唯一就行？
+2. prepare b 可以等于 pb 吗？
+3. accept b > pb ?
 
 ## 参考文章
 

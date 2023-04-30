@@ -15,7 +15,7 @@
   * 共识
     * [2pc](分布式基础/共识/2pc.md)
     * [3pc](分布式基础/共识/3pc.md)
-    * [paxos-made-simple](分布式基础/共识/paxos-made-simple.md)
+    * [paxos-made-simple](分布式基础/共识/basic-paxos-problem.md)
     * [paxos可靠直观的解释](分布式基础/共识/paxos可靠直观的解释.md)
     * [分布式锁服务](分布式基础/共识/分布式锁服务.md)
     * [浅显易懂地解释paxos](分布式基础/共识/浅显易懂地解释paxos.md)
