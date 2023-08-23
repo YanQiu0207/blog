@@ -73,6 +73,20 @@ read-write 事务提交步骤如下：
 
 关键点在于 **TT.now() 返回的是一个时间区间，不是一个时间点**。它保证真实时间在这个区间。当你为某个事务选择提交时间戳时，获取的时间区间是 [t1-e, t1+e]，选择的时间戳是 t1+e。根据 Commit Wait 规则，你需要等到某个时间点的区间 [t2-e, t2+e] 大于 t1+e时才能提交事务，即 t2-e > t1+e，调整下就是 t2-t1 > 2e，也就是说，需要的等待时间至少是平均误差的 2 倍
 
+```
+[a, b] [c, d]
+
+b = p_old + e
+c = p_new - e
+
+c >= b ==》 p_new - e >= p_old + e ==》 p_new - p_old >= 2*e
+
+b = p_old
+c = p_new
+
+c >= b ==》 p_new >= p_old ==》 p_new - p_old <= e
+```
+
 ### 快照读
 
 基于 External Consistency，Spanner 可以感知操作的先后顺序。给定一个时间戳 t，Spanner 能够识别哪些是历史数据，并提供一致性快照。
