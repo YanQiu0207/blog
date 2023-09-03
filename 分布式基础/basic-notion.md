@@ -228,12 +228,6 @@
 
 FLP 不可能原理则是在说，**要保证 safety 的话就一定不满足 liveness**。在实际应用中, Paxos, Raft 都是保证 safety 但放松了 liveness 的要求（例如 Paxos 的活锁问题），所以他们都不是完全正确的算法, 理论上存在进入无限循环的可能性。实际上概率非常低, 在工程中完全可以使用
 
-## 一致性模型
-
-### 线性一致性
-
-### 最终一致性
-
 ## 全序广播（Total Order Broadcast）
 
 全序广播用于确保消息在所有进程以相同的顺序被传递，它有两个主要的特性：
@@ -254,6 +248,11 @@ FLP 不可能原理则是在说，**要保证 safety 的话就一定不满足 li
 ## 原子提交（Atomic Commit）
 
 原子提交：所有参与者要么都提交操作，要么都不提交
+
+## 待办事项
+
+*   [Martin Kleppmann分布式系统](https://www.bilibili.com/video/BV17A411W7Cr/?p=12&vd_source=99b5b3d6e74325ce13914afe13204cce)
+*   [mit6.824](https://www.bilibili.com/video/BV16f4y1z7kn/?spm_id_from=333.337.search-card.all.click&vd_source=99b5b3d6e74325ce13914afe13204cce)
 
 ## 参考文章
 
