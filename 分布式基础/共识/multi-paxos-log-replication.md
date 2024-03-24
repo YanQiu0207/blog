@@ -3,7 +3,7 @@
 ### Leader 的产生
 
 （1）为什么需要 Leader ?
-在 Leader 的有效期内，所有提案都只能由 leader 发起。由于没有了并发冲突，日志同步可以省略 logID 阶段和 prepare 阶段。唯一的 leader 产生 logID，然后直接执行 accept，得到多数派确认即日志同步成功
+在 Leader 的有效期内，所有提案都只能由 leader 发起。由于没有了并发冲突，日志同步可以省略 logID 阶段和 prepare 阶段。唯一的 leader 产生 logID，然后直接发送 accept 请求，得到多数派确认即日志同步成功。
 
 注意，Multi-Paxos 允许出现多个**自认为是 leader 的 server**来并发生成日志，此时退化为 Basic-Paxos
 
