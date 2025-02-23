@@ -297,7 +297,7 @@ a. 优先使用 TCP 而不是 UDP
 
 b. 冗余 UDP 数据包
 
-像帧同步这种同步数据量比较小的游戏可以采用冗余 UDP 的方案，即后续的 UDP 包会冗余一定量的前面已发送的 UDP 包，这样即使丢失了部分包我们也能保证拿到完整的远端数据
+可以采用冗余 UDP 的方案，即后续的 UDP 包会冗余一定量的前面已发送的 UDP 包，这样即使丢失了部分包我们也能保证拿到完整的远端数据
 
 （4）带宽优化（减小延迟）
 
@@ -334,8 +334,24 @@ c. 计算压力分担
 ## 参考资料
 
 - [王者技术修炼之路](https://youxiputao.com/articles/11842)
+
 - [细谈网络同步在游戏历史中的发展变化（上）](https://zhuanlan.zhihu.com/p/130702310)
 - [细谈网络同步在游戏历史中的发展变化（中）](https://zhuanlan.zhihu.com/p/164686867)
 - [细谈网络同步在游戏历史中的发展变化（下）](https://zhuanlan.zhihu.com/p/336869551)
+
+- [关于“帧同步”说法的历史由来](https://zhuanlan.zhihu.com/p/165293116)
+- [再谈网游同步技术](https://www.skywind.me/blog/archives/1343)
+- [服务端十二小时（百度网盘提取码:2j9b）](https://pan.baidu.com/share/init?surl=oBvmdQgsUWKrmU8g9o3u5Q)
+- [帧锁定同步算法](https://www.skywind.me/blog/archives/131)
+- [帧同步游戏中使用 Run-Ahead 隐藏输入延迟](https://www.skywind.me/blog/archives/2746)
+- [影子跟随算法（2007 年老文一篇）](https://www.skywind.me/blog/archives/1145)
+
+
+- [网络游戏同步技术一：分类及差异](https://zhuanlan.zhihu.com/p/697083500)
+- [网络游戏同步技术二：状态同步的优化与实现](https://zhuanlan.zhihu.com/p/697158275)
+- [网络游戏同步技术三：拓展阅读](https://zhuanlan.zhihu.com/p/697165259)
+- [网络游戏同步技术四：方案选择](https://zhuanlan.zhihu.com/p/697199113)
+- [网络游戏同步技术五：帧同步的实现与优化](https://zhuanlan.zhihu.com/p/697213631)
+- [网络游戏同步技术六：若干问题探讨](https://zhuanlan.zhihu.com/p/697218660)
 
 [^1]: 各个客户端每帧播放的内容相同，但由于网络延迟和客户端性能差异，播放时间有先后是不可避免的
